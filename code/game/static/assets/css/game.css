@@ -1,0 +1,31 @@
+a {
+    color: rgb(230, 170, 5);
+}
+
+img {
+    box-shadow: 0 15px 20px rgba(0, 0, 0, 0.7); 
+}
+
+card img:hover {
+    transform: scale(1.5);
+    cursor: pointer;
+}
+
+.game_board {
+    background-image: url("../img/game_background.png");
+}
+.game_board .container-game {
+    background-color:rgba(255, 255, 255, 0.2) !important;
+    padding: 20px;
+}
+
+.game_lobby {
+    background-image: url("../img/lobby_background.png");
+}
+.game_lobby .container-game {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    padding: 20px;
+}
+
+
+

@@ -1,0 +1,30 @@
+version: '3'
+services:
+  odeck_app:
+    ports:
+      - "8000:8000"
+    build:
+      context: .
+      dockerfile: Dockerfile_odeck
+    environment:
+      MYSQL_USER: 'root'
+      MYSQL_PASSWORD: 'changeme'
+  
+  nginx_app:
+    build:
+      context: .
+      dockerfile: Dockerfile_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - "./site.conf:/etc/nginx/sites-enabled/site.conf"
+  
+  mysql_app:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 'changeme'
+      MYSQL_DATABASE: 'odeckdb'
+    volumes:
+      - "./mysqldata/:/var/lib/mysql"

@@ -1,0 +1,16 @@
+FROM mdiazcl/djangoready:3
+
+# Install gunicorn
+RUN pip3 install gunicorn
+
+# Prepare code
+RUN mkdir /app
+COPY code /app/
+COPY code/requirements.txt /tmp/requirements.txt
+
+# Install requirements
+RUN pip3 install -r /tmp/requirements.txt
+
+# Start gunicorn
+WORKDIR /app
+CMD gunicorn --bind 0.0.0.0:8000 odeckBase.wsgi

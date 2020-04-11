@@ -1,0 +1,1 @@
+docker run --rm -it -v "$(PWD)/code:/djangocode" -p 8000:8000 mdiazcl/djangoready:3 sh
