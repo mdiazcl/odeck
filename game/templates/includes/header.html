@@ -1,0 +1,13 @@
+<header>
+    <div class="navbar navbar-dark bg-primary box-shadow" style="background-color: #06356d !important; border-bottom: 5px solid #000;">
+      <div class="container d-flex justify-content-between">
+        <a href="/" class="navbar-brand d-flex align-items-center">
+          <span class="material-icons">videogame_asset</span> &nbsp;&nbsp; <strong>Deck of Cards -  Online</strong>
+
+          {% if user.is_authenticated %}
+          <div class="float-md-right">{{ user.username }} - <a href="{% url 'logout' %}">Salir</a></span>
+          {% endif %}
+        </a>
+      </div>
+    </div>
+</header>

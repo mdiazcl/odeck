@@ -1,0 +1,102 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block custom-css %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h3>Últimos 10 juegos invitados</h3>
+        <table class="table hover mt-3">
+            <thead>
+                <th>Nombre juego</th>
+                <th>id</th>
+                <th>Password</th>
+                <th>Entrar</th>
+            </thead>
+            <tbody>
+                {% if mygames %}
+                    {% for game in mygames %}
+                    <tr>
+                        <td>{{ game.name }}</td>
+                        <td>{{ game.pk }}</td>
+                        <td>{{ game.password }}</td>
+                        <td>
+                            <a href="{% url 'game_play' game_id=game.pk %}">
+                                <span class="material-icons">launch</span>
+                            </a>
+                            {% if game.is_ready %}
+                            <span class="material-icons">face</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="2">- No hay juegos -</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <hr noshade="noshade" />
+        <div class="float-md-right">
+            <a href="{% url 'game_create' %}"><button class="btn btn-success">Crear juego</button></a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h3>Últimos 10 juegos invitados</h3>
+        <table class="table hover mt-3">
+            <thead>
+                <th>Número juego</th>
+                <th>Entrar</th>
+            </thead>
+            <tbody>
+                {% if guestgames %}
+                    {% for game in guestgames %}
+                    <tr>
+                        <td>{{ game.name }}</td>
+                        <td>
+                            <a href="{% url 'game_play' game_id=game.pk %}">
+                                <span class="material-icons">launch</span>
+                            </a>
+                            {% if game.is_ready %}
+                            <span class="material-icons">face</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="2">- No te han invitado :( -</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <hr noshade="noshade" />
+        <div class="card">
+            <div class="card-body bg-success">
+                <div class="float-md-right">
+                    <form action="{% url 'game_join' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="col">
+                            <label><b>Entrar a un juego</b></label>
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control form-control-sm" name="gid" placeholder="Id de Juego" />
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control form-control-sm" name="password" placeholder="Password" />
+                        </div>
+                        <div class="col">
+                            <input type="submit" value="Unirse" class="btn btn-primary" />
+                        </div>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

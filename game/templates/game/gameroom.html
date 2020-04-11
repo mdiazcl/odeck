@@ -1,0 +1,365 @@
+{% extends 'base/base_game.html' %}
+{% load static %}
+
+{% block custom-css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.css" />
+{% endblock %}
+
+{% block custom-js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.contextMenu.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.7.1/jquery.ui.position.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="row" id="guest_hand">
+            <div class="col-md-12">
+                <hand id="oponent_hand"></hand>
+            </div>
+        </div>
+        <hr noshade="noshade" />
+        <div class="row" id="guest_field" style="height: 100px;">
+            <div class="col-md-12 w-100">
+                <field id="oponent_field"></field>
+            </div>
+        </div>
+        <hr noshade="noshade" />
+            
+        <!-- CENTER -->
+        <div class="row" style="padding: 20px" id="game">
+            <div class="col-md-2">
+                <img src="{% static 'assets/img/cards/red_back.png' %}" alt="" width="130px" onclick="api_get_card_from_deck()" style='cursor:pointer;' />
+            </div>
+            <div class="col-md-2">
+                <field id="graveyard"></field>
+            </div>
+        </div>
+        <!-- CENTER -->
+
+        <hr noshade="noshade" />
+        <div class="row" id="owner_field" style="height: 100px;">
+            <div class="col-md-12 w-100">
+                <field id="my_field"></field>
+            </div>
+        </div>
+        <hr noshade="noshade" />
+        <div class="row" id="owner_hand">
+            <div class="col-md-12">
+                <hand id="my_hand"></hand>
+            </div>
+        </div>
+        <div class="row" id="temp_controls">
+            <div class="col-md-12">
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GAME LOGIC -->
+<script>
+    /* *******************************
+     * Main game Logic
+     * *******************************
+    */
+    async function main(){
+        draw_hand();
+        draw_my_field();
+        draw_oponent_hand();
+        draw_graveyard();
+        draw_oponent_field();
+
+        setTimeout(main, 1000);
+    }
+    main(); // start ui  
+
+    /* *******************************
+     * Api Calls 
+     * *******************************
+    */
+    function get_url(url, function_success) {
+        var result = null;
+        
+        $.ajax({
+            url: url,
+            type: 'get',
+            dataType: 'json',
+            async: true,
+            success: function_success,
+        });
+        return result;
+    }
+
+    function api_get_card_from_deck(){
+        var data = get_url("{% url 'api_draw_card' game_id=game.pk location='deck' %}", 
+            function(){ console.log('api_get_card_from_deck: finished') });
+    }
+    
+    function api_put_card_graveyard(card_id){
+        url_stream = "{% url 'api_put_card_graveyard' game_id=game.pk card_id='card_id' %}";
+        url_stream = url_stream.replace('card_id', card_id);
+        
+        var data = get_url(url_stream, function(){ console.log('api_put_card_graveyard: finished') } );
+    }
+    function api_put_card_myfield(card_id){
+        url_stream = "{% url 'api_put_card_field' game_id=game.pk card_id='card_id' %}";
+        url_stream = url_stream.replace('card_id', card_id);
+        
+        var data = get_url(url_stream, function(){ console.log('api_put_card_myfield: finished') });
+    }
+    function api_put_card_myhand(card_id){
+        url_stream = "{% url 'api_put_card_hand' game_id=game.pk card_id='card_id' %}";
+        url_stream = url_stream.replace('card_id', card_id);
+        
+        var data = get_url(url_stream, function(){ console.log('api_put_card_myhand: finished') });
+    }
+
+    /* *******************************
+     * Game functions
+     * *******************************
+    */
+    function draw_hand(data){
+        // Get data
+        get_url("{% url 'api_get_my_hand' game_id=game.pk %}", function(response){
+            target = $('#my_hand');
+        
+            temp_cards = Array.from(target.find('card'));
+            if(temp_cards.length > 0){
+                old_cards = []
+                for(i = 0; i < temp_cards.length; i++){
+                    old_cards.push(parseInt(temp_cards[i].id));
+                }
+            }
+            new_cards = [];
+            
+            my_cards = response['data'];
+            template = "<card id=\"|id|\"><img class='rounded' src='{% static 'assets/img/cards/' %}|filename|' width='60px' /> "
+                my_cards.forEach(element => {
+                card_id = element.id;
+                new_cards.push(element.id);
+                if(target.find('#'+card_id).length == 0){
+                    card_template = template.replace('|filename|', element.image);
+                    card_template = card_template.replace('|id|', element.id);
+                    target.append(card_template);
+                }
+            }); 
+
+            // Delete removed ones
+            if(temp_cards.length > 0){
+                to_delete = old_cards.filter(x => !new_cards.includes(x));
+                for(i = 0; i < to_delete.length; i++){
+                    target.find('#'+to_delete[i]).remove();
+                }
+            }
+        });
+    }
+
+    function draw_my_field(){
+        get_url("{% url 'api_get_my_field' game_id=game.pk %}", function(response){
+            target = $('#my_field');
+        
+            temp_cards = Array.from(target.find('card'));
+            if(temp_cards.length > 0){
+                old_cards = []
+                for(i = 0; i < temp_cards.length; i++){
+                    old_cards.push(parseInt(temp_cards[i].id));
+                }
+            }
+            new_cards = [];
+            
+            my_cards = response['data'];
+            template = "<card id=\"|id|\"><img class='rounded' src='{% static 'assets/img/cards/' %}|filename|' width='60px' /> "
+                my_cards.forEach(element => {
+                card_id = element.id;
+                new_cards.push(element.id);
+                if(target.find('#'+card_id).length == 0){
+                    card_template = template.replace('|filename|', element.image);
+                    card_template = card_template.replace('|id|', element.id);
+                    target.append(card_template);
+                }
+            }); 
+
+            // Delete removed ones
+            if(temp_cards.length > 0){
+                to_delete = old_cards.filter(x => !new_cards.includes(x));
+                for(i = 0; i < to_delete.length; i++){
+                    target.find('#'+to_delete[i]).remove();
+                }
+            }
+        });
+    }
+
+    function draw_oponent_hand(){
+        get_url("{% url 'api_count_oponent_hand' game_id=game.pk %}", function(response){
+            target = $('#oponent_hand');
+
+            oponent_cards = response['data'];
+
+            oponent_cards_length = oponent_cards;
+            actual_cards_length = target.find('card').length;
+            diff = actual_cards_length - oponent_cards_length;
+
+            template = "<card><img class='rounded' src='{% static 'assets/img/cards/red_back.png' %}' width='60px' /> "
+            if(diff < 0){
+                // Agregar diff
+                for(i = 0; i < diff * (-1); i++){
+                    target.append(template); 
+                }
+            } else {
+                // Remover diff
+                for(i = 0; i < diff; i++){ 
+                    $('#oponent_hand card:first').remove(); 
+                }
+            }
+        });
+        
+    }
+
+    function draw_oponent_field(){
+        get_url("{% url 'api_get_oponent_field' game_id=game.pk %}", function(response){
+            target = $('#oponent_field');
+        
+            temp_cards = Array.from(target.find('card'));
+            if(temp_cards.length > 0){
+                old_cards = []
+                for(i = 0; i < temp_cards.length; i++){
+                    old_cards.push(parseInt(temp_cards[i].id));
+                }
+            }
+            new_cards = [];
+            
+            my_cards = response['data'];
+            template = "<card id=\"|id|\" class='rounded'><img src='{% static 'assets/img/cards/' %}|filename|' width='60px' /> "
+                my_cards.forEach(element => {
+                card_id = element.id;
+                new_cards.push(element.id);
+                if(target.find('#'+card_id).length == 0){
+                    card_template = template.replace('|filename|', element.image);
+                    card_template = card_template.replace('|id|', element.id);
+                    target.append(card_template);
+                }
+            }); 
+
+            // Delete removed ones
+            if(temp_cards.length > 0){
+                to_delete = old_cards.filter(x => !new_cards.includes(x));
+                for(i = 0; i < to_delete.length; i++){
+                    target.find('#'+to_delete[i]).remove();
+                }
+            }
+        });
+        
+    }
+
+    function draw_graveyard(){
+        get_url("{% url 'api_get_graveyard' game_id=game.pk %}", function(response){
+            target = $('#graveyard');
+        
+            temp_cards = Array.from(target.find('card'));
+            if(temp_cards.length > 0){
+                old_cards = []
+                for(i = 0; i < temp_cards.length; i++){
+                    old_cards.push(parseInt(temp_cards[i].id));
+                }
+            }
+            new_cards = [];
+            
+            my_cards = response['data'];
+            template = "<card id=\"|id|\" class='rounded'><img src='{% static 'assets/img/cards/' %}|filename|' width='60px' /> "
+                my_cards.forEach(element => {
+                card_id = element.id;
+                new_cards.push(element.id);
+                if(target.find('#'+card_id).length == 0){
+                    card_template = template.replace('|filename|', element.image);
+                    card_template = card_template.replace('|id|', element.id);
+                    target.append(card_template);
+                }
+            }); 
+
+            // Delete removed ones
+            if(temp_cards.length > 0){
+                to_delete = old_cards.filter(x => !new_cards.includes(x));
+                for(i = 0; i < to_delete.length; i++){
+                    target.find('#'+to_delete[i]).remove();
+                }
+            }
+        });
+    }
+
+    /*
+     * GUI HOOKS
+     */
+    
+    // Menu Contextual cartas en mano
+    $(function() {
+        $.contextMenu({
+            selector: '#my_hand card', 
+            callback: function(key, options) {
+                card_element = options.$trigger[0];
+                card_id = card_element.id;
+                
+                if(key == "to_graveyard") {    
+                    api_put_card_graveyard(card_id);
+                }
+                if(key == "to_myfield") {
+                    api_put_card_myfield(card_id);
+                }
+            },
+            items: {
+                "to_graveyard": {name: "Al cementerio", icon: "compress-arrows-alt"},
+                "to_myfield": {name: "Bajar", icon: "down"},
+                "sep1": "---------",
+                "close": {name: "Cerrar", icon: "close"},
+            }
+        });
+    });
+
+    // Menu contextual field
+    $(function() {
+        $.contextMenu({
+            selector: '#my_field card', 
+            callback: function(key, options) {
+                card_element = options.$trigger[0];
+                card_id = card_element.id;
+                
+                if(key == "to_graveyard") {    
+                    api_put_card_graveyard(card_id);
+                }
+                if(key == "to_myhand") {
+                    api_put_card_myhand(card_id);
+                }
+            },
+            items: {
+                "to_graveyard": {name: "Al cementerio", icon: "compress-arrows-alt"},
+                "to_myhand": {name: "Subir a mano", icon: "down"},
+                "sep1": "---------",
+                "close": {name: "Cerrar", icon: "close"},
+            }
+        });
+    });
+
+    // Menu contextual graveyard
+    $(function() {
+        $.contextMenu({
+            selector: '#graveyard card', 
+            callback: function(key, options) {
+                card_element = options.$trigger[0];
+                card_id = card_element.id;
+                
+                if(key == "to_myhand") {
+                    api_put_card_myhand(card_id);
+                    card_element.animate({ width: "20%" }, 500);
+                }
+            },
+            items: {
+                "to_myhand": {name: "Tomar carta", icon: "down"},
+                "sep1": "---------",
+                "close": {name: "Cerrar", icon: "close"},
+            }
+        });
+    });
+
+</script>
+
+{% endblock %}
