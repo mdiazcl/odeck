@@ -31,7 +31,7 @@ SECRET_KEY = '-8%f^yrr5xu1q+(8g+_(e0s^uito86@s1xlo&az2bky__c$s=q'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','odeck.mdiazlira.com']
+ALLOWED_HOSTS = ['localhost','deck.mdiazlira.com']
 
 
 # Application definition
